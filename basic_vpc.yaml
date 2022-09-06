@@ -35,6 +35,9 @@ Parameters:
     Type: String
     Default: 10.192.32.0/21
 
+Conditions:
+  IsInProduction: !Equals [!Ref "EnvironmentName", "production"]
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -72,6 +75,7 @@ Resources:
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
+    Condition: IsInProduction
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: !Select [1, !GetAZs ""]
@@ -94,6 +98,7 @@ Resources:
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
+    Condition: IsInProduction
     Properties:
       VpcId: !Ref VPC
       AvailabilityZone: !Select [1, !GetAZs ""]
@@ -111,6 +116,7 @@ Resources:
 
   NatGateway2EIP:
     Type: AWS::EC2::EIP
+    Condition: IsInProduction
     DependsOn: InternetGatewayAttachment
     Properties:
       Domain: vpc
@@ -123,6 +129,7 @@ Resources:
 
   NatGateway2:
     Type: AWS::EC2::NatGateway
+    Condition: IsInProduction
     Properties:
       AllocationId: !GetAtt NatGateway2EIP.AllocationId
       SubnetId: !Ref PublicSubnet2
@@ -151,6 +158,7 @@ Resources:
 
   PublicSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: IsInProduction
     Properties:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet2
@@ -178,6 +186,7 @@ Resources:
 
   PrivateRouteTable2:
     Type: AWS::EC2::RouteTable
+    Condition: IsInProduction
     Properties:
       VpcId: !Ref VPC
       Tags:
@@ -186,6 +195,7 @@ Resources:
 
   DefaultPrivateRoute2:
     Type: AWS::EC2::Route
+    Condition: IsInProduction
     Properties:
       RouteTableId: !Ref PrivateRouteTable2
       DestinationCidrBlock: 0.0.0.0/0
@@ -193,6 +203,7 @@ Resources:
 
   PrivateSubnet2RouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: IsInProduction
     Properties:
       RouteTableId: !Ref PrivateRouteTable2
       SubnetId: !Ref PrivateSubnet2
@@ -211,11 +222,17 @@ Outputs:
 
   PublicSubnets:
     Description: A list of the public subnets
-    Value: !Join [",", [!Ref PublicSubnet1, !Ref PublicSubnet2]]
+    Value: !If
+      - IsInProduction
+      - !Join [",", [!Ref PublicSubnet1, !Ref PublicSubnet2]]
+      - !Ref PublicSubnet1
 
   PrivateSubnets:
     Description: A list of the private subnets
-    Value: !Join [",", [!Ref PrivateSubnet1, !Ref PrivateSubnet2]]
+    Value: !If
+      - IsInProduction
+      - !Join [",", [!Ref PrivateSubnet1, !Ref PrivateSubnet2]]
+      - !Ref PrivateSubnet1
 
   PublicSubnet1:
     Description: A reference to the public subnet in the 1st Availability Zone
@@ -223,6 +240,7 @@ Outputs:
 
   PublicSubnet2:
     Description: A reference to the public subnet in the 2nd Availability Zone
+    Condition: IsInProduction
     Value: !Ref PublicSubnet2
 
   PrivateSubnet1:
@@ -231,6 +249,7 @@ Outputs:
 
   PrivateSubnet2:
     Description: A reference to the private subnet in the 2nd Availability Zone
+    Condition: IsInProduction
     Value: !Ref PrivateSubnet2
 
   NoIngressSecurityGroup:
