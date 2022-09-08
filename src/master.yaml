@@ -1,0 +1,40 @@
+Description:
+  This template deploys a VPC, with a pair of public and private subnets spread
+  across two Availability Zones. It deploys an internet gateway, with a default
+  route on the public subnets. It deploys a pair of NAT gateways (one in each AZ),
+  and default routes for them in the private subnets.
+
+Parameters:
+  TemplateBucketURL:
+    Description: The URL where the CloudFormation templates are hosted.
+    Type: String
+    Default: https://s3.amazonaws.com/recright-sandbox-cloudformation
+
+  EnvironmentName:
+    Description: An environment name that is prefixed to resource names
+    Type: String
+    AllowedValues: ["development", "staging", "production"]
+
+  VpcCIDR:
+    Description: Please enter the IP range (CIDR notation) for this VPC
+    Type: String
+    Default: 10.192.0.0/16
+
+Mappings:
+  TemplateLocations:
+    Infrastructure:
+      vpcPath: "infrastructure/vpc.yaml"
+
+Resources:
+  VPC: # Ignore warning on VPC
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: !Join
+        - "/"
+        - - !Ref TemplateBucketURL
+          - !FindInMap [TemplateLocations, Infrastructure, vpcPath]
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        CIDR: !Ref VpcCIDR
