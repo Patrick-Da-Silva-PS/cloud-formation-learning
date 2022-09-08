@@ -28,8 +28,15 @@ Mappings:
     Infrastructure:
       publicSubnet1CIDR: 10.192.10.0/24
       publicSubnet2CIDR: 10.192.11.0/24
+      publicSubnet3CIDR: 10.192.12.0/24
       privateSubnet1CIDR: 10.192.20.0/24
       privateSubnet2CIDR: 10.192.21.0/24
+      privateSubnet3CIDR: 10.192.22.0/24
+
+Conditions:
+  # isInDevelopment: !Equals [!Ref EnvironmentName, development]
+  # isInStaging: !Equals [!Ref EnvironmentName, staging]
+  isInProduction: !Equals [!Ref EnvironmentName, production]
 
 Resources:
   VPC: # Ignore warning on VPC
@@ -48,7 +55,15 @@ Resources:
           !FindInMap [Environments, Infrastructure, publicSubnet1CIDR]
         PublicSubnet2CIDR:
           !FindInMap [Environments, Infrastructure, publicSubnet2CIDR]
+        PublicSubnet3CIDR: !If
+          - isInProduction
+          - !FindInMap [Environments, Infrastructure, publicSubnet3CIDR]
+          - ""
         PrivateSubnet1CIDR:
           !FindInMap [Environments, Infrastructure, privateSubnet1CIDR]
         PrivateSubnet2CIDR:
           !FindInMap [Environments, Infrastructure, privateSubnet2CIDR]
+        PrivateSubnet3CIDR: !If
+          - isInProduction
+          - !FindInMap [Environments, Infrastructure, privateSubnet3CIDR]
+          - ""

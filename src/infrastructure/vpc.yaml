@@ -24,6 +24,11 @@ Parameters:
     Description: Please enter the second public subnet CIDR
     Type: String
 
+  PublicSubnet3CIDR:
+    Description: Please enter the third public subnet CIDR
+    Type: String
+    Default: ""
+
   PrivateSubnet1CIDR:
     Description: Please enter the first private subnet CIDR
     Type: String
@@ -31,6 +36,17 @@ Parameters:
   PrivateSubnet2CIDR:
     Description: Please enter the second private subnet CIDR
     Type: String
+
+  PrivateSubnet3CIDR:
+    Description: Please enter the third private subnet CIDR
+    Type: String
+    Default: ""
+
+Conditions:
+  # Only create third subnet pair if both CIDRs for third public & private subnets are present
+  createThirdSubnetPair: !And
+    - !Not [!Equals [!Ref PublicSubnet3CIDR, ""]]
+    - !Not [!Equals [!Ref PrivateSubnet3CIDR, ""]]
 
 Resources:
   VPC:
@@ -53,7 +69,7 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub Public Subnet (AZ1 - ${EnvironmentName})
+          Value: !Sub ${EnvironmentName} - AZ1 - Public Subnet
 
   PublicSubnet2:
     Type: AWS::EC2::Subnet
@@ -64,7 +80,19 @@ Resources:
       MapPublicIpOnLaunch: true
       Tags:
         - Key: Name
-          Value: !Sub Public Subnet (AZ2 - ${EnvironmentName})
+          Value: !Sub ${EnvironmentName} - AZ2 - Public Subnet
+
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Condition: createThirdSubnetPair
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [2, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet3CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} - AZ3 - Public Subnet
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -75,7 +103,7 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub Private Subnet (AZ1 - ${EnvironmentName})
+          Value: !Sub ${EnvironmentName} - AZ1 - Private Subnet
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -86,7 +114,19 @@ Resources:
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
-          Value: !Sub Private Subnet (AZ2 - ${EnvironmentName})
+          Value: !Sub ${EnvironmentName} - AZ2 - Private Subnet
+
+  PrivateSubnet3:
+    Type: AWS::EC2::Subnet
+    Condition: createThirdSubnetPair
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [2, !GetAZs ""]
+      CidrBlock: !Ref PrivateSubnet3CIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} - AZ3 - Private Subnet
 
 Outputs:
   vpcId:
@@ -101,6 +141,11 @@ Outputs:
     Description: The second public subnet's reference
     Value: !Ref PublicSubnet2
 
+  publicSubnet3:
+    Description: The third public subnet's reference
+    Value: !Ref PublicSubnet3
+    Condition: createThirdSubnetPair
+
   privateSubnet1:
     Description: The first private subnet's reference
     Value: !Ref PrivateSubnet1
@@ -108,3 +153,8 @@ Outputs:
   privateSubnet2:
     Description: The second private subnet's reference
     Value: !Ref PrivateSubnet2
+
+  privateSubnet3:
+    Description: The second private subnet's reference
+    Value: !Ref PrivateSubnet3
+    Condition: createThirdSubnetPair
