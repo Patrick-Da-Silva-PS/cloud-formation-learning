@@ -16,26 +16,29 @@ Parameters:
     Description: Please enter the VPC's CIDR
     Type: String
 
+  # AZ1
   PublicSubnet1CIDR:
     Description: Please enter the first public subnet CIDR
     Type: String
-
-  PublicSubnet2CIDR:
-    Description: Please enter the second public subnet CIDR
-    Type: String
-
-  PublicSubnet3CIDR:
-    Description: Please enter the third public subnet CIDR
-    Type: String
-    Default: ""
 
   PrivateSubnet1CIDR:
     Description: Please enter the first private subnet CIDR
     Type: String
 
+  # AZ2
+  PublicSubnet2CIDR:
+    Description: Please enter the second public subnet CIDR
+    Type: String
+
   PrivateSubnet2CIDR:
     Description: Please enter the second private subnet CIDR
     Type: String
+
+  # AZ3 (optional)
+  PublicSubnet3CIDR:
+    Description: Please enter the third public subnet CIDR
+    Type: String
+    Default: ""
 
   PrivateSubnet3CIDR:
     Description: Please enter the third private subnet CIDR
@@ -60,6 +63,7 @@ Resources:
           # Value: development-vpc, staging-vpc, production-vpc
           Value: !Join ["-", [!Ref EnvironmentName, "vpc"]]
 
+  # AZ1
   PublicSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -70,29 +74,6 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ1 - Public Subnet
-
-  PublicSubnet2:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [1, !GetAZs ""]
-      CidrBlock: !Ref PublicSubnet2CIDR
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName} - AZ2 - Public Subnet
-
-  PublicSubnet3:
-    Type: AWS::EC2::Subnet
-    Condition: createThirdSubnetPair
-    Properties:
-      VpcId: !Ref VPC
-      AvailabilityZone: !Select [2, !GetAZs ""]
-      CidrBlock: !Ref PublicSubnet3CIDR
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: !Sub ${EnvironmentName} - AZ3 - Public Subnet
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -105,6 +86,18 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ1 - Private Subnet
 
+  # AZ2
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet2CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} - AZ2 - Public Subnet
+
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -115,6 +108,19 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ2 - Private Subnet
+
+  # AZ3 (optional)
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Condition: createThirdSubnetPair
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [2, !GetAZs ""]
+      CidrBlock: !Ref PublicSubnet3CIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} - AZ3 - Public Subnet
 
   PrivateSubnet3:
     Type: AWS::EC2::Subnet
