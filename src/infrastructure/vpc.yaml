@@ -63,6 +63,18 @@ Resources:
           # Value: development-vpc, staging-vpc, production-vpc
           Value: !Join ["-", [!Ref EnvironmentName, "vpc"]]
 
+  IGW:
+      Type: AWS::EC2::InternetGateway
+      Properties:
+        Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref EnvironmentName, "igw"]]
+
+  VpcIgwAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties: 
+      InternetGatewayId: !Ref IGW
+      VpcId: !Ref VPC
 
   PublicRouteTable:
     Type: AWS::EC2::RouteTable
