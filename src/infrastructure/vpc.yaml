@@ -25,6 +25,11 @@ Parameters:
     Description: Please enter the first private subnet CIDR
     Type: String
 
+  Ip1AllocationId:
+    Description: Allocation ID for first IP
+    Type: String
+    Default: ""
+
   # AZ2
   PublicSubnet2CIDR:
     Description: Please enter the second public subnet CIDR
@@ -33,6 +38,11 @@ Parameters:
   PrivateSubnet2CIDR:
     Description: Please enter the second private subnet CIDR
     Type: String
+
+  Ip2AllocationId:
+    Description: Allocation ID for second IP
+    Type: String
+    Default: ""
 
   # AZ3 (optional)
   PublicSubnet3CIDR:
@@ -45,11 +55,26 @@ Parameters:
     Type: String
     Default: ""
 
+  Ip3AllocationId:
+    Description: Allocation ID for third IP
+    Type: String
+    Default: ""
+
 Conditions:
   # Only create third subnet pair if both CIDRs for third public & private subnets are present
   createThirdSubnetPair: !And
     - !Not [!Equals [!Ref PublicSubnet3CIDR, ""]]
     - !Not [!Equals [!Ref PrivateSubnet3CIDR, ""]]
+  AllocateIp1: !Equals [!Ref Ip1AllocationId, ""]
+  AllocateIp2: !Equals [!Ref Ip2AllocationId, ""]
+  # AllocateIp3: !Equals [!Ref Ip3AllocationId, ""]
+  createNatGateway3: !And 
+    # createThirdSubnetPair
+    - !And
+      - !Not [!Equals [!Ref PublicSubnet3CIDR, ""]]
+      - !Not [!Equals [!Ref PrivateSubnet3CIDR, ""]]
+    # AllocateIp3
+    - !Equals [!Ref Ip3AllocationId, ""]
 
 Resources:
   VPC:
@@ -102,6 +127,26 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet1
 
+  NatGateway1EIP:
+    Type: AWS::EC2::EIP
+    Condition: AllocateIp1
+    Properties:
+      Domain: vpc
+
+  NatGateway1:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        !If [
+          AllocateIp1,
+          !GetAtt NatGateway1EIP.AllocationId,
+          !Ref Ip1AllocationId,
+        ]
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref EnvironmentName, "nat-gateway", "1"]]
+
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
     Properties:
@@ -112,6 +157,27 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ1 - Private Subnet
+
+  PrivateRouteTable1:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ1)
+
+  DefaultPrivateRoute1:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref PrivateRouteTable1
+      NatGatewayId: !Ref NatGateway1
+
+  PrivateSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable1
+      SubnetId: !Ref PrivateSubnet1
 
   # AZ2
   PublicSubnet2:
@@ -131,6 +197,26 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet2
 
+  NatGateway2EIP:
+    Type: AWS::EC2::EIP
+    Condition: AllocateIp2
+    Properties:
+      Domain: vpc
+
+  NatGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        !If [
+          AllocateIp2,
+          !GetAtt NatGateway2EIP.AllocationId,
+          !Ref Ip2AllocationId,
+        ]
+      SubnetId: !Ref PublicSubnet2
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref EnvironmentName, "nat-gateway", "2"]]
+
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -141,6 +227,27 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ2 - Private Subnet
+
+  PrivateRouteTable2:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ2)
+
+  DefaultPrivateRoute2:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref PrivateRouteTable2
+      NatGatewayId: !Ref NatGateway2
+
+  PrivateSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable2
+      SubnetId: !Ref PrivateSubnet2
 
   # AZ3 (optional)
   PublicSubnet3:
@@ -162,6 +269,27 @@ Resources:
       RouteTableId: !Ref PublicRouteTable
       SubnetId: !Ref PublicSubnet3
 
+  NatGateway3EIP:
+    Type: AWS::EC2::EIP
+    Condition: createNatGateway3
+    Properties:
+      Domain: vpc
+
+  NatGateway3:
+    Type: AWS::EC2::NatGateway
+    Condition: createThirdSubnetPair
+    Properties:
+      AllocationId:
+        !If [
+          createNatGateway3,
+          !GetAtt NatGateway3EIP.AllocationId,
+          !Ref Ip3AllocationId,
+        ]
+      SubnetId: !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref EnvironmentName, "nat-gateway", "3"]]
+
   PrivateSubnet3:
     Type: AWS::EC2::Subnet
     Condition: createThirdSubnetPair
@@ -173,6 +301,30 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ3 - Private Subnet
+
+  PrivateRouteTable3:
+    Type: AWS::EC2::RouteTable
+    Condition: createThirdSubnetPair
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ3)
+
+  DefaultPrivateRoute3:
+    Type: AWS::EC2::Route
+    Condition: createThirdSubnetPair
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref PrivateRouteTable3
+      NatGatewayId: !Ref NatGateway3
+
+  PrivateSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: createThirdSubnetPair
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable3
+      SubnetId: !Ref PrivateSubnet3
 
 Outputs:
   vpcId:
