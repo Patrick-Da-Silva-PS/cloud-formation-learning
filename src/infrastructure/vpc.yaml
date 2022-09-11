@@ -63,6 +63,15 @@ Resources:
           # Value: development-vpc, staging-vpc, production-vpc
           Value: !Join ["-", [!Ref EnvironmentName, "vpc"]]
 
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref EnvironmentName, "public-route-table"]]
+
   # AZ1
   PublicSubnet1:
     Type: AWS::EC2::Subnet
@@ -74,6 +83,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ1 - Public Subnet
+
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -98,6 +113,12 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ2 - Public Subnet
 
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
     Properties:
@@ -121,6 +142,13 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub ${EnvironmentName} - AZ3 - Public Subnet
+
+  PublicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Condition: createThirdSubnetPair
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet3
 
   PrivateSubnet3:
     Type: AWS::EC2::Subnet
