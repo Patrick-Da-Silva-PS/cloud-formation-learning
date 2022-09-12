@@ -36,10 +36,16 @@ delete_stack_production:
 
 # All
 create_stacks:
-	make create_stack_development && make create_stack_staging && make create_stack_production
+	make create_stack_development && \
+	make create_stack_staging && \
+	make create_stack_production
 
 update_stacks:
-	make update_stack_development && make update_stack_staging && make update_stack_production
+	make update_stack_development && \
+	make update_stack_staging && \
+	make update_stack_production
 
 delete_stacks:
-	make delete_stack_development && make delete_stack_staging && make delete_stack_production
+	make delete_stack_development && \
+	make delete_stack_staging && \
+	make delete_stack_production
