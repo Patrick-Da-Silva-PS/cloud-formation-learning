@@ -19,6 +19,7 @@ Mappings:
   TemplateLocations:
     Infrastructure:
       vpcPath: "infrastructure/vpc.yaml"
+      snsPath: "infrastructure/sns-topics.yaml"
       queuesPath: "infrastructure/queues.yaml"
   Environments:
     development: # demo
@@ -92,5 +93,17 @@ Resources:
         - - !Ref TemplateBucketURL
           - !FindInMap [TemplateLocations, Infrastructure, queuesPath]
 
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+
+  Topics:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL:  !Join
+        - "/"
+        - - !Ref TemplateBucketURL
+          - !FindInMap [TemplateLocations, Infrastructure, snsPath]
       Parameters:
         EnvironmentName: !Ref EnvironmentName

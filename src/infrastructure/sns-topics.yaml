@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Template to generate SNS topics.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+
+Resources:
+  DefaultAppNotifications:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub ${EnvironmentName}DefaultAppNotifications
+
+Outputs:
+  DefaultAppNotifications:
+    Description: Default app notifications ARN
+    Value: !Ref DefaultAppNotifications
