@@ -90,11 +90,11 @@ Resources:
           Value: !Join ["-", [!Ref EnvironmentName, "vpc"]]
 
   IGW:
-      Type: AWS::EC2::InternetGateway
-      Properties:
-        Tags:
-        - Key: Name
-          Value: !Join ["-", [!Ref EnvironmentName, "igw"]]
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+      - Key: Name
+        Value: !Join ["-", [!Ref EnvironmentName, "igw"]]
 
   VpcIgwAttachment:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -110,9 +110,10 @@ Resources:
         - Key: Name
           Value: !Join ["-", [!Ref EnvironmentName, "public-route-table"]]
 
-  PublicRouteTableIGWAssociation:
-    Type: AWS::EC2::GatewayRouteTableAssociation
-    Properties: 
+  PublicRouteTableIGWRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref IGW
       RouteTableId: !Ref PublicRouteTable
 
