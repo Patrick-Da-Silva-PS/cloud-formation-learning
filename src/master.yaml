@@ -15,23 +15,31 @@ Parameters:
     Type: String
     AllowedValues: ["development", "staging", "production"]
 
-  VpcCIDR:
-    Description: Please enter the IP range (CIDR notation) for this VPC
-    Type: String
-    Default: 10.192.0.0/16
-
 Mappings:
   TemplateLocations:
     Infrastructure:
       vpcPath: "infrastructure/vpc.yaml"
   Environments:
-    Infrastructure:
-      publicSubnet1CIDR: 10.192.10.0/24
-      publicSubnet2CIDR: 10.192.11.0/24
-      publicSubnet3CIDR: 10.192.12.0/24
-      privateSubnet1CIDR: 10.192.20.0/24
-      privateSubnet2CIDR: 10.192.21.0/24
-      privateSubnet3CIDR: 10.192.22.0/24
+    development: # demo
+      vpcCIDR: 172.22.0.0/16
+      publicSubnet1CIDR: 172.22.8.0/21
+      publicSubnet2CIDR: 172.22.16.0/21
+      privateSubnet1CIDR: 172.22.32.0/21
+      privateSubnet2CIDR: 172.22.40.0/21
+    staging:
+      vpcCIDR: 172.21.0.0/16
+      publicSubnet1CIDR: 172.21.8.0/21
+      publicSubnet2CIDR: 172.21.16.0/21
+      privateSubnet1CIDR: 172.21.24.0/21
+      privateSubnet2CIDR: 172.21.32.0/21
+    production:
+      vpcCIDR: 172.23.0.0/16
+      publicSubnet1CIDR: 172.23.8.0/21
+      publicSubnet2CIDR: 172.23.16.0/21
+      publicSubnet3CIDR: 172.23.24.0/21
+      privateSubnet1CIDR: 172.23.32.0/21
+      privateSubnet2CIDR: 172.23.40.0/21
+      privateSubnet3CIDR: 172.23.48.0/21
 
 Conditions:
   # isInDevelopment: !Equals [!Ref EnvironmentName, development]
@@ -51,20 +59,20 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         TemplateBucketURL: !Ref TemplateBucketURL
-        VpcCIDR: !Ref VpcCIDR
+        VpcCIDR: !FindInMap [Environments, !Ref EnvironmentName, vpcCIDR]
         PublicSubnet1CIDR:
-          !FindInMap [Environments, Infrastructure, publicSubnet1CIDR]
+          !FindInMap [Environments, !Ref EnvironmentName, publicSubnet1CIDR]
         PublicSubnet2CIDR:
-          !FindInMap [Environments, Infrastructure, publicSubnet2CIDR]
+          !FindInMap [Environments, !Ref EnvironmentName, publicSubnet2CIDR]
         PublicSubnet3CIDR: !If
           - isInProduction
-          - !FindInMap [Environments, Infrastructure, publicSubnet3CIDR]
+          - !FindInMap [Environments, !Ref EnvironmentName, publicSubnet3CIDR]
           - ""
         PrivateSubnet1CIDR:
-          !FindInMap [Environments, Infrastructure, privateSubnet1CIDR]
+          !FindInMap [Environments, !Ref EnvironmentName, privateSubnet1CIDR]
         PrivateSubnet2CIDR:
-          !FindInMap [Environments, Infrastructure, privateSubnet2CIDR]
+          !FindInMap [Environments, !Ref EnvironmentName, privateSubnet2CIDR]
         PrivateSubnet3CIDR: !If
           - isInProduction
-          - !FindInMap [Environments, Infrastructure, privateSubnet3CIDR]
+          - !FindInMap [Environments, !Ref EnvironmentName, privateSubnet3CIDR]
           - ""
