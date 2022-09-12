@@ -1,0 +1,126 @@
+Description: >
+  Deploys a public-private subnet pair with a NAT Gateway, Elastic IP (for the NAT Gateway) and a private route table.
+
+# Metadata:
+
+Parameters:
+  EnvironmentName:
+    Description: A name that will be prefixed to resource names based on the environment
+    Type: String
+
+  VpcId:
+    Description: The reference to the VPC
+    Type: AWS::EC2::VPC::Id
+
+  PublicRouteTableId:
+    Description: The reference to the route table for the public subnets
+    Type: String
+
+  PublicSubnetCIDR:
+    Description: Please enter the public subnet's CIDR
+    Type: String
+
+  PrivateSubnetCIDR:
+    Description: Please enter the private subnet's CIDR
+    Type: String
+
+  IpAllocationId:
+    Description: Allocation ID for IP if Elastic IP is not going to be used
+    Type: String
+    Default: ""
+
+  SubnetPairIndex:
+    Description: Number to label elements of the subnet pair
+    Type: String
+
+  AvailabilityZone:
+    Description: Avaibility Zone in which to place the subnet pair
+    Type: String
+
+# Mappings:
+
+Conditions:
+  allocateIp: !Equals [!Ref IpAllocationId, ""]
+
+Resources:
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcId
+      AvailabilityZone: !Ref AvailabilityZone
+      CidrBlock: !Ref PublicSubnetCIDR
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} - AZ${SubnetPairIndex} - Public Subnet
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTableId
+      SubnetId: !Ref PublicSubnet
+
+  NatGatewayEIP:
+    Type: AWS::EC2::EIP
+    Condition: allocateIp
+    Properties:
+      Domain: vpc
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+      AllocationId:
+        !If [
+          allocateIp,
+          !GetAtt NatGatewayEIP.AllocationId,
+          !Ref IpAllocationId,
+        ]
+      SubnetId: !Ref PublicSubnet
+      Tags:
+        - Key: Name
+          Value: !Join ["-", [!Ref EnvironmentName, "nat-gateway", !Ref SubnetPairIndex]]
+
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VpcId
+      AvailabilityZone: !Ref AvailabilityZone
+      CidrBlock: !Ref PrivateSubnetCIDR
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} - AZ${SubnetPairIndex} - Private Subnet
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VpcId
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Private Routes (AZ${SubnetPairIndex})
+
+  DefaultPrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref PrivateRouteTable
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      SubnetId: !Ref PrivateSubnet
+
+Outputs:
+  PublicSubnet:
+    Description: The public subnet's reference
+    Value: !Ref PublicSubnet
+    Export:
+      Name: !Sub ${AWS::StackName}-public-subnet-${SubnetPairIndex}
+
+  PrivateSubnet:
+    Description: The private subnet's reference
+    Value: !Ref PrivateSubnet
+    Export:
+      Name: !Sub ${AWS::StackName}-private-subnet-${SubnetPairIndex}

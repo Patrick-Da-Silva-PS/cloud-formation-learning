@@ -50,6 +50,7 @@ Resources:
           - !FindInMap [TemplateLocations, Infrastructure, vpcPath]
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+        TemplateBucketURL: !Ref TemplateBucketURL
         VpcCIDR: !Ref VpcCIDR
         PublicSubnet1CIDR:
           !FindInMap [Environments, Infrastructure, publicSubnet1CIDR]
