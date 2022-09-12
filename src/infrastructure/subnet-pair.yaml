@@ -9,7 +9,7 @@ Parameters:
     Type: String
 
   VpcId:
-    Description: The reference to the VPC
+    Description: Choose which VPC the security groups should be deployed to
     Type: AWS::EC2::VPC::Id
 
   PublicRouteTableId:

@@ -21,6 +21,7 @@ Mappings:
       vpcPath: "infrastructure/vpc.yaml"
       snsPath: "infrastructure/sns-topics.yaml"
       queuesPath: "infrastructure/queues.yaml"
+      securityGroupsPath: "infrastructure/security-groups.yaml"
   Environments:
     development: # demo
       vpcCIDR: 172.22.0.0/16
@@ -107,3 +108,16 @@ Resources:
           - !FindInMap [TemplateLocations, Infrastructure, snsPath]
       Parameters:
         EnvironmentName: !Ref EnvironmentName
+
+  SecurityGroups:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: !Join
+        - "/"
+        - - !Ref TemplateBucketURL
+          - !FindInMap [TemplateLocations, Infrastructure, securityGroupsPath]
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        VpcId: !GetAtt VPC.Outputs.VpcId
