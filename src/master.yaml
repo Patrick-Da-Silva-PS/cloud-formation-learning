@@ -22,6 +22,7 @@ Mappings:
       snsPath: "infrastructure/sns-topics.yaml"
       queuesPath: "infrastructure/queues.yaml"
       securityGroupsPath: "infrastructure/security-groups.yaml"
+      efsPath: "infrastructure/efs.yaml"
   Environments:
     development: # demo
       vpcCIDR: 172.22.0.0/16
@@ -121,3 +122,19 @@ Resources:
       Parameters:
         EnvironmentName: !Ref EnvironmentName
         VpcId: !GetAtt VPC.Outputs.VpcId
+
+  EFS:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: !Join
+        - "/"
+        - - !Ref TemplateBucketURL
+          - !FindInMap [TemplateLocations, Infrastructure, efsPath]
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
+        MountTargetSecurityGroup: !GetAtt SecurityGroups.Outputs.MountTargetSecurityGroup
+        PrivateSubnet1: !GetAtt VPC.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt VPC.Outputs.PrivateSubnet2
+        PrivateSubnet3: !GetAtt VPC.Outputs.PrivateSubnet3

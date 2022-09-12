@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Template to create an EFS filesystem on each private subnet.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+
+  MountTargetSecurityGroup:
+    Description: Security group for mount targets
+    Type: AWS::EC2::SecurityGroup::Id
+
+  PrivateSubnet1:
+    Description: Subnet for first mount target
+    Type: AWS::EC2::Subnet::Id
+
+  PrivateSubnet2:
+    Description: Subnet for second mount target
+    Type: AWS::EC2::Subnet::Id
+
+  PrivateSubnet3:
+    Description: Subnet for third mount target
+    Type: String # Otherwise you cannot pass the empty string as an ID
+    Default: ''
+
+Conditions:
+  createMountTarget3: !Not [!Equals [!Ref PrivateSubnet3, '']]
+
+Resources:
+  FileSystem:
+    Type: AWS::EFS::FileSystem
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      FileSystemTags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName} Volume
+
+  MountTarget:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystem
+      SubnetId: !Ref PrivateSubnet1
+      SecurityGroups:
+        - !Ref MountTargetSecurityGroup
+
+  MountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystem
+      SubnetId: !Ref PrivateSubnet2
+      SecurityGroups:
+        - !Ref MountTargetSecurityGroup
+
+  MountTarget3:
+    Type: AWS::EFS::MountTarget
+    Condition: createMountTarget3
+    Properties:
+      FileSystemId: !Ref FileSystem
+      SubnetId: !Ref PrivateSubnet3
+      SecurityGroups:
+        - !Ref MountTargetSecurityGroup
+
+Outputs:
+  FileSystem:
+    Description: A reference to the FileSystem
+    Value: !Ref FileSystem

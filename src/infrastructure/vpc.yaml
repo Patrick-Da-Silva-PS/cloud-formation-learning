@@ -200,11 +200,15 @@ Outputs:
     Value: !GetAtt SubnetPair2.Outputs.PrivateSubnet
 
   PublicSubnet3:
-    Condition: createThirdSubnetPair
     Description: The third public subnet's reference
-    Value: !GetAtt SubnetPair3.Outputs.PublicSubnet
+    Value: !If
+      - createThirdSubnetPair
+      - !GetAtt SubnetPair3.Outputs.PublicSubnet
+      - ""
 
   PrivateSubnet3:
-    Condition: createThirdSubnetPair
     Description: The third private subnet's reference
-    Value: !GetAtt SubnetPair3.Outputs.PrivateSubnet
+    Value: !If
+      - createThirdSubnetPair
+      - !GetAtt SubnetPair3.Outputs.PrivateSubnet
+      - ""
