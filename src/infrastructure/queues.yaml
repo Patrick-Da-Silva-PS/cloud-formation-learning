@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Template to generate SQS queues.
+
+Parameters:
+  EnvironmentName:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+
+Resources:
+  SoapMessageQueue:
+    Type: "AWS::SQS::Queue"
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      FifoQueue: true
+      # 345600 seconds = 4 days
+      MessageRetentionPeriod: 345600
+      QueueName: !Sub ${EnvironmentName}SoapServiceQueue.fifo
+
+  SubmittedSequencedVideosQueue:
+    Type: "AWS::SQS::Queue"
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      # 345600 seconds = 4 days
+      MessageRetentionPeriod: 345600
+      QueueName: !Sub ${EnvironmentName}SubmittedSequencedVideos
+
+  SubmittedOpentokStreamRecordingsQueue:
+    Type: "AWS::SQS::Queue"
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      # 345600 seconds = 4 days
+      MessageRetentionPeriod: 345600
+      QueueName: !Sub ${EnvironmentName}SubmittedOpentokStreamRecordings
+
+Outputs:
+  SoapMessageQueue:
+    Description: SOAP message queue ARN
+    Value: !GetAtt SoapMessageQueue.Arn
+  SubmittedSequencedVideosQueue:
+    Description: Submitted sequenced videos message queue ARN
+    Value: !GetAtt SubmittedSequencedVideosQueue.Arn
+  SubmittedOpentokStreamRecordingsQueue:
+    Description: Submitted opentok stream recordings message queue ARN
+    Value: !GetAtt SubmittedOpentokStreamRecordingsQueue.Arn

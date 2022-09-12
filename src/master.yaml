@@ -19,19 +19,24 @@ Mappings:
   TemplateLocations:
     Infrastructure:
       vpcPath: "infrastructure/vpc.yaml"
+      queuesPath: "infrastructure/queues.yaml"
   Environments:
     development: # demo
       vpcCIDR: 172.22.0.0/16
       publicSubnet1CIDR: 172.22.8.0/21
       publicSubnet2CIDR: 172.22.16.0/21
+      publicSubnet3CIDR: ""
       privateSubnet1CIDR: 172.22.32.0/21
       privateSubnet2CIDR: 172.22.40.0/21
+      privateSubnet3CIDR: ""
     staging:
       vpcCIDR: 172.21.0.0/16
       publicSubnet1CIDR: 172.21.8.0/21
       publicSubnet2CIDR: 172.21.16.0/21
+      publicSubnet3CIDR: ""
       privateSubnet1CIDR: 172.21.24.0/21
       privateSubnet2CIDR: 172.21.32.0/21
+      privateSubnet3CIDR: ""
     production:
       vpcCIDR: 172.23.0.0/16
       publicSubnet1CIDR: 172.23.8.0/21
@@ -76,3 +81,16 @@ Resources:
           - isInProduction
           - !FindInMap [Environments, !Ref EnvironmentName, privateSubnet3CIDR]
           - ""
+
+  Queues:
+    Type: AWS::CloudFormation::Stack
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Properties:
+      TemplateURL: !Join
+        - "/"
+        - - !Ref TemplateBucketURL
+          - !FindInMap [TemplateLocations, Infrastructure, queuesPath]
+
+      Parameters:
+        EnvironmentName: !Ref EnvironmentName
